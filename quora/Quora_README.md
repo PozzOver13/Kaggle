@@ -6,7 +6,7 @@
 
 ## STEP 1> Pre-processing of data:
 - Tokenization
-- Lemmatization (including "ain't" == "isn't") ( https://www.nltk.org/ )
+- Lemmatization (including "ain't" == "isn't") ( https://www.nltk.org/ e un buon tutorial: https://www.datacamp.com/community/tutorials/stemming-lemmatization-python )
 - Speech Tagging
 - Misspelled words removal / count ( https://anaconda.org/conda-forge/hunspell )
 
