@@ -8,7 +8,7 @@
 - Tokenization
 - Lemmatization (including "ain't" == "isn't")
 - Speech Tagging
-- Misspelled words removal / count
+- Misspelled words removal / count ( https://anaconda.org/conda-forge/hunspell )
 
 ## STEP 2> Modeling:
 - Naive Bayes classifier
