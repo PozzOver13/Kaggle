@@ -1,5 +1,5 @@
 ########################################################
-# PROGRAM:  01_QUORA_regressione_logistica.py
+# PROGRAM:  03_QUORA_pre_processing.py
 # DATE:     2018-11-28
 # NOTE:     
 ########################################################
@@ -23,14 +23,42 @@ pd.options.mode.chained_assignment = None
 pd.options.display.max_columns = 999
 
 #### CARICAMENTO DATI ####
-train_df = pd.read_csv("/Users/stefanopozzati/Documents/GitHub/data_science/quora/datainput/train.csv")
-test_df = pd.read_csv("/Users/stefanopozzati/Documents/GitHub/data_science/quora/datainput/test.csv")
+train_df = pd.read_csv("C:/Users/cg08900/Documents/Pandora/Personale/kaggle/Quora/datainput/train.csv")
+test_df = pd.read_csv("C:/Users/cg08900/Documents/Pandora/Personale/kaggle/Quora/datainput/test.csv")
 print("Train shape : ", train_df.shape)
 print("Test shape : ", test_df.shape)
 
-# caricamento embedding
-news_path = '/Volumes/KEY64/Data Science/Kaggle/quora/embeddings/GoogleNews-vectors-negative300/GoogleNews-vectors-negative300.bin'
-embeddings_index = KeyedVectors.load_word2vec_format(news_path, binary=True)
+# lettura diversi embeddings
+def load_embed(file):
+    def get_coefs(word,*arr): 
+        return word, np.asarray(arr, dtype='float32')
+    
+    if file == 'datainput/embeddings/wiki-news-300d-1M/wiki-news-300d-1M.vec':
+        embeddings_index = dict(get_coefs(*o.split(" ")) for o in open(file) if len(o)>100)
+    else:
+        embeddings_index = dict(get_coefs(*o.split(" ")) for o in open(file, encoding='latin'))
+        
+    return embeddings_index
+
+embd_file = 'datainput/embeddings/GoogleNews-vectors-negative300/GoogleNews-vectors-negative300.bin'
+embeddings_index = load_embed(embd_file)
+'''
+Embeddings disponibili
+embd_wiki = 'datainput/embeddings/wiki-news-300d-1M/wiki-news-300d-1M.vec'
+embd_glove = 'datainput/embeddings/glove.840B.300d/glove.840B.300d.txt'
+embd_google = 'datainput/embeddings/GoogleNews-vectors-negative300/GoogleNews-vectors-negative300.bin'
+'''
+
+## Comprendere l'embedding e la sua struttura
+#  essendo il mapping parola -> numpy 1D array e' esattamente come un 
+#  dizionario
+
+prova = {}
+prova['one'] = embeddings_index['one']
+prova["°C"] = embeddings_index["°C"]
+prova[","] = embeddings_index[","]
+prova
+
 
 #### PREPROCESSING KAGGLE ####
 def build_vocab(sentences, verbose =  True):
@@ -47,13 +75,20 @@ def build_vocab(sentences, verbose =  True):
                 vocab[word] = 1
     return vocab
 
+# pulisco le frasi dalla punteggiatura
+# table = str.maketrans({key: None for key in string.punctuation})
+# train_df["question_text"] = train_df["question_text"].progress_apply(lambda x: x.translate(table))
 
-sentences = train_df["question_text"].progress_apply(lambda x: x.split()).values
+def split_pro_str(x):
+    x = re.findall(r"[\w']+|[.,!?;]", x)
+    return(x)
+
+sentences = train_df["question_text"].progress_apply(lambda x: split_pro_str(x))
 vocab = build_vocab(sentences)
 print({k: vocab[k] for k in list(vocab)[:11]})
 
 # controllo la coperturasull'embedding
-def check_coverage(vocab,embeddings_index):
+def check_coverage(vocab, embeddings_index):
     a = {}
     oov = {}
     k = 0
@@ -84,9 +119,11 @@ def clean_text(x):
         x = x.replace(punct, ' ')
     for punct in '&':
         x = x.replace(punct, f' {punct} ')
-    for punct in '?!.,"#$%\'()*+-/:;<=>@[\\]^_`{|}~' + '“”’':
+    for punct in '?!.,"#$%\()*+-/:;<=>@[\\]^_`{|}~' + '“”’':
         x = x.replace(punct, '')
     return x
+
+
 
 train_df["question_text"] = train_df["question_text"].progress_apply(lambda x: clean_text(x))
 sentences = train_df["question_text"].apply(lambda x: x.split())
